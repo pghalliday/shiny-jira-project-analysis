@@ -3,10 +3,13 @@ web:
   ports:
     - "5000:5000"
   volumes:
-    - ./app:/srv/app
+    - ./R:/srv/R
+    - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
+    - ./log:/var/log/shiny-server
 livereload:
   build: ./livereload/
   ports:
     - "35729:35729"
   volumes:
-    - ./app:/watch/app
+    - ./R:/watch/R
+    - ./livereload/livereload.js:/watch/livereload.js

@@ -1,6 +1,12 @@
 web:
-  build: .
+  build: ./
   ports:
     - "5000:5000"
   volumes:
     - ./app:/srv/app
+livereload:
+  build: ./livereload/
+  ports:
+    - "35729:35729"
+  volumes:
+    - ./app:/watch/app

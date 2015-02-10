@@ -8,26 +8,28 @@ books <<- list("A Mid Summer Night's Dream" = "summer",
               "Romeo and Juliet" = "romeo")
 
 # Using "memoise" to automatically cache the results
-getTermMatrix <- memoise(function(book) {
+get_term_matrix <- memoise(function(book) {
   # Careful not to let just any name slip in here; a
   # malicious user could manipulate this value.
-  if (!(book %in% books))
+  if (! (book %in% books))
     stop("Unknown book")
 
-  text <- readLines(sprintf("./%s.txt.gz", book),
-    encoding="UTF-8")
+  text <- readLines(
+    sprintf("./%s.txt.gz", book),
+    encoding = "UTF-8"
+  )
 
-  myCorpus = Corpus(VectorSource(text))
-  myCorpus = tm_map(myCorpus, content_transformer(tolower))
-  myCorpus = tm_map(myCorpus, removePunctuation)
-  myCorpus = tm_map(myCorpus, removeNumbers)
-  myCorpus = tm_map(myCorpus, removeWords,
+  mycorpus <- Corpus(VectorSource(text))
+  mycorpus <- tm_map(mycorpus, content_transformer(tolower))
+  mycorpus <- tm_map(mycorpus, removePunctuation)
+  mycorpus <- tm_map(mycorpus, removeNumbers)
+  mycorpus <- tm_map(mycorpus, removeWords,
          c(stopwords("SMART"), "thy", "thou", "thee", "the", "and", "but"))
 
-  myDTM = TermDocumentMatrix(myCorpus,
+  mydtm <- TermDocumentMatrix(mycorpus,
               control = list(minWordLength = 1))
   
-  m = as.matrix(myDTM)
+  m <- as.matrix(mydtm)
   
   sort(rowSums(m), decreasing = TRUE)
 })

@@ -16,7 +16,7 @@ shinyServer(function(input, output) {
     # ...but not for anything else
     isolate({
       withProgress(message = "Processing corpus...", {
-        getTermMatrix(input$selection)
+        get_term_matrix(input$selection)
       })
     })
   })

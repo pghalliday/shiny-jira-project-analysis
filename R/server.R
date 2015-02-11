@@ -1,33 +1,32 @@
-library(shiny)
- 
-# Text of the books downloaded from:
-# A Mid Summer Night's Dream:
-#  http://www.gutenberg.org/cache/epub/2242/pg2242.txt
-# The Merchant of Venice:
-#  http://www.gutenberg.org/cache/epub/2243/pg2243.txt
-# Romeo and Juliet:
-#  http://www.gutenberg.org/cache/epub/1112/pg1112.txt
- 
-shinyServer(function(input, output) {
-  # Define a reactive expression for the document term matrix
-  terms <- reactive({
-    # Change when the "update" button is pressed...
-    input$update
-    # ...but not for anything else
-    isolate({
-      withProgress(message = "Processing corpus...", {
-        get_term_matrix(input$selection)
-      })
-    })
+shinyServer(function(input, output, clientData, session) {
+  issuesSet <- reactive({
+    !is.null(input$issuesFile)
   })
 
-  # Make the wordcloud drawing predictable during a session
-  wordcloud_rep <- repeatable(wordcloud)
+  issues <- reactive({
+    if (issuesSet()) {
+      read.csv(
+        input$issuesFile[1, 'datapath'],
+        header = TRUE
+      )
+    }
+  })
 
-  output$plot <- renderPlot({
-    v <- terms()
-    wordcloud_rep(names(v), v, scale=c(4,0.5),
-                  min.freq = input$freq, max.words=input$max,
-                  colors=brewer.pal(8, "Dark2"))
+  output$issuesSet <- issuesSet
+  outputOptions(output, 'issuesSet', suspendWhenHidden = FALSE)
+  
+  output$table <- renderTable({
+    issues()
+  })
+
+  observe({
+    if (issuesSet()) {
+      columns = colnames(issues())
+      updateSelectInput(
+        session,
+        'column',
+        choices = c('<NONE>', columns)
+      )
+    }
   })
 })

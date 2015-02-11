@@ -1,25 +1,15 @@
-library(shiny)
-
-shinyUI(fluidPage(
-  # Application title
-  headerPanel("Word Cloud"),
-  
-  # Sidebar with a slider and selection inputs
-  sidebarPanel(width = 5,
-    selectInput("selection", "Choose a book:", 
-                choices = books),
-    actionButton("update", "Change"),
-    hr(),
-    sliderInput("freq", 
-                "Minimum Frequency:", 
-                min = 1,  max = 50, value = 15),
-    sliderInput("max", 
-                "Maximum Number of Words:", 
-                min = 1,  max = 300,  value = 100)
-  ),
-  
-  # Show Word Cloud
-  mainPanel(
-    plotOutput("plot")
+shinyUI(
+  fluidPage(
+    titlePanel('JIRA Project Analysis'),
+    sidebarLayout(
+      sidebarPanel(
+        fileInput('issuesFile', 'Issues CSV File', FALSE, c('text/csv')),
+        conditionalPanel(
+          condition = "output.issuesSet",
+          selectInput('column', 'Column', c())
+        )
+      ),
+      mainPanel(tableOutput('table'))
+    )
   )
-))
+)

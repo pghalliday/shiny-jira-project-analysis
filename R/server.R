@@ -31,10 +31,6 @@ shinyServer(function(input, output, clientData, session) {
     issues()
   })
 
-  output$daysTable <- renderTable({
-    days()
-  })
-
   mapToColumn <- function (value, prefix, suffix) {
     if (identical('<all>', value)) {
       result <- suffix
@@ -55,13 +51,14 @@ shinyServer(function(input, output, clientData, session) {
       data <- daysVariableByPartition(variable, partition)
       colors = rainbow(ncol(data))
       columns = colnames(data)
+      filteredData <- data[, colSums(is.na(data)) < nrow(data)]
       plot(data,
         plot.type = 'single',
         col = colors,
         lwd = 2,
         ylim = c(
-          min(c(0, min(na.omit(data)))),
-          max(na.omit(data))
+          min(c(0, min(na.omit(filteredData)))),
+          max(na.omit(filteredData))
         )
       )
       legend(
@@ -78,6 +75,10 @@ shinyServer(function(input, output, clientData, session) {
   }
 
   sapply(dayVariables, renderDayVariablePlots)
+
+  output$daysTable <- renderTable({
+    days()
+  })
 
   updatePartitionOptions <- function (columns, partition) {
     options <- c(

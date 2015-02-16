@@ -126,7 +126,10 @@ daysPanel <- tabPanel(
       )
     )
   ),
-  tableOutput('daysTable'),
+  conditionalPanel(
+    condition = 'output.daysSet',
+    tableOutput('daysTable')
+  ),
   value = 'days'
 )
 

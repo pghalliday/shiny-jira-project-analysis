@@ -17,12 +17,7 @@ shinyServer(function(input, output, clientData, session) {
 
   days <- reactive({
     if (daysSet()) {
-      data <- read.csv(
-        input$daysFile[1, 'datapath'],
-        header = TRUE
-      )
-      data$date <- as.Date(data$date, '%Y/%m/%d')
-      return(data)
+      zoo::read.zoo(input$daysFile[1, 'datapath'], sep = ',', header = TRUE, format = '%Y/%m/%d')
     }
   })
 
@@ -37,9 +32,7 @@ shinyServer(function(input, output, clientData, session) {
   })
 
   output$daysTable <- renderTable({
-    data <- days()
-    data$date <- format(data$date, '%Y/%m/%d')
-    return(data)
+    days()
   })
 
   mapToColumn <- function (value, prefix, suffix) {
@@ -51,13 +44,18 @@ shinyServer(function(input, output, clientData, session) {
     return(result)
   }
 
-  output$daysOpenByType <- renderPlot({
+  daysOpenByType <- reactive({
     types <- input$dayTypes
     columns <- sapply(types, mapToColumn, prefix = 'type', suffix = 'open')
-    data <- days()[,columns]
-    #data.zoo <- with(data, zoo::zoo(columns, order.by = data$date))
-    #data.ts <- as.ts(data.zoo)
-    #plot(data.ts)
+    days()[, columns]
+  })
+
+  output$daysOpenByType <- renderPlot({
+    data <- daysOpenByType()
+    colors = rainbow(ncol(data))
+    columns = colnames(data)
+    plot(data, plot.type = 'single', col = colors, lwd = 2)
+    legend('topleft', legend = columns, col = colors, lwd = 2)
   })
 
   observe({

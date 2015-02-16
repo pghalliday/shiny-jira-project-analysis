@@ -47,7 +47,7 @@ shinyServer(function(input, output, clientData, session) {
   daysVariableByPartition <- function (variable, partition) {
     day_partition_options <- input[[paste0('day_', partition, '_options')]]
     columns <- sapply(day_partition_options, mapToColumn, prefix = partition, suffix = variable)
-    days()[, columns]
+    days()[, columns, drop = FALSE]
   }
 
   renderDayVariableByPartitionPlot <- function (variable, partition) {
@@ -55,8 +55,21 @@ shinyServer(function(input, output, clientData, session) {
       data <- daysVariableByPartition(variable, partition)
       colors = rainbow(ncol(data))
       columns = colnames(data)
-      plot(data, plot.type = 'single', col = colors, lwd = 2)
-      legend('topleft', legend = columns, col = colors, lwd = 2)
+      plot(data,
+        plot.type = 'single',
+        col = colors,
+        lwd = 2,
+        ylim = c(
+          min(c(0, min(na.omit(data)))),
+          max(na.omit(data))
+        )
+      )
+      legend(
+        'topleft',
+        legend = columns,
+        col = colors,
+        lwd = 2
+      )
     })
   }
 
@@ -67,7 +80,17 @@ shinyServer(function(input, output, clientData, session) {
   sapply(dayVariables, renderDayVariablePlots)
 
   updatePartitionOptions <- function (columns, partition) {
-    options <- c('<all>', na.omit(stringr::str_match(columns, paste0("^", partition, "\\.(.*)\\.open$"))[,2]))
+    options <- c(
+      '<all>',
+      unique(
+        na.omit(
+          stringr::str_match(
+            columns,
+            paste0("^", partition, "\\.(.*)\\.[^.]*$")
+          )[,2]
+        )
+      )
+    )
     updateCheckboxGroupInput(
       session,
       paste0('day_', partition, '_options'),

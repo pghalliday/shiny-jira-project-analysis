@@ -1,3 +1,24 @@
+dayPartitionOptionsPanel <- function (partition) {
+  conditionalPanel(
+    condition = paste0("input.dayPartition === '", partition, "'"),
+    checkboxGroupInput(paste0('day_', partition, '_options'), paste0(partition, ' values'), c('none'))
+  )
+}
+
+dayPartitionPanel <- function (variable, partition) {
+  conditionalPanel(
+    condition = paste0("input.dayPartition === '", partition, "'"),
+    plotOutput(paste0('days_', variable, '_by_', partition))
+  )
+}
+
+dayVariablePanel <- function (variable) {
+  conditionalPanel(
+    condition = paste0("input.dayVariable === '", variable, "'"),
+    do.call(verticalLayout, lapply(dayPartitions, dayPartitionPanel, variable = variable))
+  )
+}
+
 issuesPanel <- tabPanel(
   'Issues',
   br(),
@@ -22,109 +43,12 @@ daysPanel <- tabPanel(
       fileInput('daysFile', 'Days CSV File', FALSE, c('text/csv')),
       conditionalPanel(
         condition = 'output.daysSet',
-        selectInput('dayVariable', 'Variable', c(
-          'open',
-          'technicalDebt',
-          'leadTime',
-          'cycleTime',
-          'deferredTime'
-        )),
-        selectInput('dayPartition', 'Partition', c(
-          'type',
-          'priority',
-          'component'
-        )),
-        conditionalPanel(
-          condition = "input.dayPartition === 'type'",
-          checkboxGroupInput('dayTypes', 'Types', c('none'))
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'priority'",
-          checkboxGroupInput('dayPriorities', 'Priorities', c('none'))
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'component'",
-          checkboxGroupInput('dayComponents', 'Components', c('none'))
-        )
+        selectInput('dayVariable', 'Variable', dayVariables),
+        selectInput('dayPartition', 'Partition', dayPartitions),
+        do.call(verticalLayout, lapply(dayPartitions, dayPartitionOptionsPanel))
       )
     ),
-    mainPanel(
-      conditionalPanel(
-        condition = "input.dayVariable === 'open'",
-        conditionalPanel(
-          condition = "input.dayPartition === 'type'",
-          plotOutput('daysOpenByType')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'priority'",
-          plotOutput('daysOpenByPriority')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'component'",
-          plotOutput('daysOpenByComponent')
-        )
-      ),
-      conditionalPanel(
-        condition = "input.dayVariable === 'technicalDebt'",
-        conditionalPanel(
-          condition = "input.dayPartition === 'type'",
-          plotOutput('daysTechnicalDebtByType')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'priority'",
-          plotOutput('daysTechnicalDebtByPriority')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'component'",
-          plotOutput('daysTechnicalDebtByComponent')
-        )
-      ),
-      conditionalPanel(
-        condition = "input.dayVariable === 'leadTime'",
-        conditionalPanel(
-          condition = "input.dayPartition === 'type'",
-          plotOutput('daysLeadTimeByType')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'priority'",
-          plotOutput('daysLeadTimeByPriority')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'component'",
-          plotOutput('daysLeadTimeByComponent')
-        )
-      ),
-      conditionalPanel(
-        condition = "input.dayVariable === 'cycleTime'",
-        conditionalPanel(
-          condition = "input.dayPartition === 'type'",
-          plotOutput('daysCycleTimeByType')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'priority'",
-          plotOutput('daysCycleTimeByPriority')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'component'",
-          plotOutput('daysCycleTimeByComponent')
-        )
-      ),
-      conditionalPanel(
-        condition = "input.dayVariable === 'deferredTime'",
-        conditionalPanel(
-          condition = "input.dayPartition === 'type'",
-          plotOutput('daysDeferredTimeByType')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'priority'",
-          plotOutput('daysDeferredTimeByPriority')
-        ),
-        conditionalPanel(
-          condition = "input.dayPartition === 'component'",
-          plotOutput('daysDeferredTimeByComponent')
-        )
-      )
-    )
+    do.call(mainPanel, lapply(dayVariables, dayVariablePanel))
   ),
   conditionalPanel(
     condition = 'output.daysSet',

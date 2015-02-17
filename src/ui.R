@@ -30,7 +30,11 @@ issuesPanel <- tabPanel(
         selectInput('issueFields', 'Issue Fields', c())
       )
     ),
-    mainPanel(tableOutput('issuesTable'))
+    mainPanel()
+  ),
+  conditionalPanel(
+    condition = 'output.issuesSet',
+    tableOutput('issuesTable')
   ),
   value = 'issues'
 )

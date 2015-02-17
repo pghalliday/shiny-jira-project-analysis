@@ -27,13 +27,14 @@ issuesPanel <- tabPanel(
       fileInput('issuesFile', 'Issues CSV File', FALSE, c('text/csv')),
       conditionalPanel(
         condition = "output.issuesSet",
-        selectInput('issueFields', 'Issue Fields', c())
+        selectInput('issueFields', 'Issue Fields', c()),
+        checkboxInput('showIssuesTable', 'Show data table')
       )
     ),
     mainPanel()
   ),
   conditionalPanel(
-    condition = 'output.issuesSet',
+    condition = 'output.issuesSet && input.showIssuesTable',
     tableOutput('issuesTable')
   ),
   value = 'issues'
@@ -49,13 +50,14 @@ daysPanel <- tabPanel(
         condition = 'output.daysSet',
         selectInput('dayVariable', 'Variable', dayVariables),
         selectInput('dayPartition', 'Partition', dayPartitions),
-        do.call(verticalLayout, lapply(dayPartitions, dayPartitionOptionsPanel))
+        do.call(verticalLayout, lapply(dayPartitions, dayPartitionOptionsPanel)),
+        checkboxInput('showDaysTable', 'Show data table')
       )
     ),
     do.call(mainPanel, lapply(dayVariables, dayVariablePanel))
   ),
   conditionalPanel(
-    condition = 'output.daysSet',
+    condition = 'output.daysSet && input.showDaysTable',
     tableOutput('daysTable')
   ),
   value = 'days'

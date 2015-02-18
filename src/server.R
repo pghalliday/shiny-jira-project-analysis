@@ -49,23 +49,15 @@ shinyServer(function(input, output, clientData, session) {
   renderDayVariableByPartitionPlot <- function (variable, partition) {
     output[[paste0('days_', variable, '_by_', partition)]] <- renderPlot({
       data <- daysVariableByPartition(variable, partition)
-      colors = rainbow(ncol(data))
-      columns = colnames(data)
       filteredData <- data[, colSums(is.na(data)) < nrow(data)]
-      plot(data,
-        plot.type = 'single',
-        col = colors,
-        lwd = 2,
-        ylim = c(
-          min(c(0, min(na.omit(filteredData)))),
-          max(na.omit(filteredData))
-        )
+      ylim = c(
+        min(c(0, min(na.omit(filteredData)))),
+        max(na.omit(filteredData))
       )
-      legend(
-        'topleft',
-        legend = columns,
-        col = colors,
-        lwd = 2
+      (
+        zoo::autoplot.zoo(data, facets = NULL, ylim = ylim)
+        + geom_line(size = 1.5)
+        + theme(text = element_text(size = 16))
       )
     })
   }

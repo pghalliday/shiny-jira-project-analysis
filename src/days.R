@@ -29,6 +29,26 @@ days <- function(input, output, clientData, session) {
     }
   })
 
+  generateVariableOptions <- function (variable) {
+    conditionalPanel(
+      condition = paste0("input.dayVariable === '", variable, "'"),
+      sliderInput(
+        paste0('day_', variable, '_ma'),
+        'Moving Average Window',
+        min = 1,
+        max = 30,
+        value = 1
+      )
+    )
+  }
+
+  generateAllVariableOptions <- function (variables) {
+    lapply(
+      variables,
+      generateVariableOptions
+    )
+  }
+
   generatePartitionOptions <- function (index, names, partitions) {
     partition <- names[index]
     options <- c('<all>', partitions[[index]])
@@ -69,14 +89,16 @@ days <- function(input, output, clientData, session) {
 
   renderVariableByPartitionPlot <- function (variable, partition) {
     output[[paste0('days_', variable, '_by_', partition)]] <- renderPlot({
-      data <- daysVariableByPartition(variable, partition)
-      filteredData <- data[, colSums(is.na(data)) < nrow(data)]
+      range = input$dayRange
+      data <- daysVariableByPartition(variable, partition)[range[1]:range[2], ]
+      dataMA <- zoo::rollapply(data, input[[paste0('day_', variable, '_ma')]], mean)
+      filteredData <- dataMA[, colSums(is.na(dataMA)) < nrow(dataMA)]
       ylim = c(
         min(c(0, min(na.omit(filteredData)))),
         max(na.omit(filteredData))
       )
       (
-        zoo::autoplot.zoo(data, facets = NULL, ylim = ylim)
+        zoo::autoplot.zoo(dataMA, facets = NULL, ylim = ylim)
         + geom_line(size = 1.5)
         + theme(text = element_text(size = 16))
       )
@@ -115,6 +137,7 @@ days <- function(input, output, clientData, session) {
 
   observe({
     dimensions = dimensionsReactive()
+    days = daysReactive()
     if (!is.null(dimensions)) {
       variables = dimensions$variables
       partitions = dimensions$partitions
@@ -123,7 +146,15 @@ days <- function(input, output, clientData, session) {
           verticalLayout,
           list(
             sliderInput('dayPlotHeight', 'Plot Height', min = 100, max = 2000, value = 400),
+            sliderInput(
+              'dayRange',
+              'Range',
+              min = 1,
+              max = nrow(days),
+              value = c(1, nrow(days))
+            ),
             selectInput('dayVariable', 'Variable', variables),
+            generateAllVariableOptions(variables),
             selectInput('dayPartition', 'Partition', names(partitions)),
             generateAllPartitionOptions(partitions),
             checkboxInput('showDaysTable', 'Show data table')

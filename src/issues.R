@@ -160,8 +160,8 @@ issues <- function(input, output, clientData, session) {
       leadTime >= leadTimeCrop[1] &
       leadTime <= leadTimeCrop[2] &
       cycleTime >= cycleTimeCrop[1] &
-      cycleTime >= cycleTimeCrop[1] &
-      deferredTime <= deferredTimeCrop[2] &
+      cycleTime <= cycleTimeCrop[2] &
+      deferredTime >= deferredTimeCrop[1] &
       deferredTime <= deferredTimeCrop[2]
     , ]
     output$issueScatterMatrix <- renderPlot({

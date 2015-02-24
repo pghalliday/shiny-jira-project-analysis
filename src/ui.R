@@ -4,18 +4,13 @@ issuesPanel <- tabPanel(
   sidebarLayout(
     sidebarPanel(
       fileInput('issuesFile', 'Issues CSV File', FALSE, c('text/csv')),
-      conditionalPanel(
-        condition = "output.issuesSet",
-        selectInput('issueFields', 'Issue Fields', c()),
-        checkboxInput('showIssuesTable', 'Show data table')
-      )
+      htmlOutput('issueOptions')
     ),
-    mainPanel()
+    mainPanel(
+      htmlOutput('issuePlots')
+    )
   ),
-  conditionalPanel(
-    condition = 'output.issuesSet && input.showIssuesTable',
-    tableOutput('issuesTable')
-  ),
+  htmlOutput('issuesTablePanel'),
   value = 'issues'
 )
 

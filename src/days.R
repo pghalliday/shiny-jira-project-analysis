@@ -13,7 +13,7 @@ days <- function(input, output, clientData, session) {
       matches = na.omit(
         stringr::str_match(
           columns,
-          paste0("^([^.]*)\\.(.*)\\.([^.]*)$")
+          "^([^.]*)\\.(.*)\\.([^.]*)$"
         )
       )
       variables = unique(matches[, 4])

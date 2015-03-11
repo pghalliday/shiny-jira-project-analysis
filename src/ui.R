@@ -8,6 +8,7 @@ commitData <- {
   when = author@when
   paste(
     paste('date:', as.POSIXct(when@time, origin="1970-01-01")),
+    paste('sha:', commit@sha),
     paste('name:', author@name),
     paste('email:', author@email),
     paste('message:', commit@message),

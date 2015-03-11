@@ -1,33 +1,25 @@
-days <- function(input, output, clientData, session) {
-  daysReactive <- reactive({
-    file <- input$daysFile
-    if (!is.null(file)) {
-      zoo::read.zoo(file[1, 'datapath'], sep = ',', header = TRUE, format = '%Y/%m/%d')
-    }
-  })
+days <- function(datadir, input, output, clientData, session) {
+  days <- zoo::read.zoo(file.path(datadir, 'jira-days.csv'), sep = ',', header = TRUE, format = '%Y/%m/%d')
 
-  dimensionsReactive <- reactive({
-    days = daysReactive()
-    if (!is.null(days)) {
-      columns = colnames(days)
-      matches = na.omit(
-        stringr::str_match(
-          columns,
-          "^([^.]*)\\.(.*)\\.([^.]*)$"
-        )
+  dimensions <- {
+    columns = colnames(days)
+    matches = na.omit(
+      stringr::str_match(
+        columns,
+        "^([^.]*)\\.(.*)\\.([^.]*)$"
       )
-      variables = unique(matches[, 4])
-      partitionNames = unique(matches[, 2])
-      partitions = list()
-      for (partition in partitionNames) {
-        partitions[[partition]] = unique(matches[which(matches[, 2] == partition), 3])
-      }
-      list(
-        variables = variables,
-        partitions = partitions
-      )
+    )
+    variables = unique(matches[, 4])
+    partitionNames = unique(matches[, 2])
+    partitions = list()
+    for (partition in partitionNames) {
+      partitions[[partition]] = unique(matches[which(matches[, 2] == partition), 3])
     }
-  })
+    list(
+      variables = variables,
+      partitions = partitions
+    )
+  }
 
   generateVariableOptions <- function (variable) {
     conditionalPanel(
@@ -84,7 +76,7 @@ days <- function(input, output, clientData, session) {
   daysVariableByPartition <- function (variable, partition) {
     day_partition_options <- input[[paste0('day_', partition, '_options')]]
     columns <- sapply(day_partition_options, mapToColumn, prefix = partition, suffix = variable)
-    daysReactive()[, columns, drop = FALSE]
+    days[, columns, drop = FALSE]
   }
 
   renderVariableByPartitionPlot <- function (variable, partition) {
@@ -135,44 +127,38 @@ days <- function(input, output, clientData, session) {
     )
   }
 
-  observe({
-    dimensions = dimensionsReactive()
-    days = daysReactive()
-    if (!is.null(dimensions)) {
-      variables = dimensions$variables
-      partitions = dimensions$partitions
-      output$dayOptions <- renderUI({
-        do.call(
-          verticalLayout,
-          list(
-            sliderInput('dayPlotHeight', 'Plot Height', min = 100, max = 2000, value = 400),
-            sliderInput(
-              'dayRange',
-              'Range',
-              min = 1,
-              max = nrow(days),
-              value = c(1, nrow(days))
-            ),
-            selectInput('dayVariable', 'Variable', variables),
-            generateAllVariableOptions(variables),
-            selectInput('dayPartition', 'Partition', names(partitions)),
-            generateAllPartitionOptions(partitions),
-            checkboxInput('showDaysTable', 'Show data table')
-          )
-        )
-      })
-      output$dayPlots <- renderUI({
-        generatePlots(variables, partitions)
-      })
-      output$daysTablePanel <- renderUI({
-        conditionalPanel(
-          condition = 'input.showDaysTable',
-          tableOutput('daysTable')
-        )
-      })
-      output$daysTable <- renderTable({
-        daysReactive()
-      })
-    }
+  variables = dimensions$variables
+  partitions = dimensions$partitions
+  output$dayOptions <- renderUI({
+    do.call(
+      verticalLayout,
+      list(
+        sliderInput('dayPlotHeight', 'Plot Height', min = 100, max = 2000, value = 700),
+        sliderInput(
+          'dayRange',
+          'Range',
+          min = 1,
+          max = nrow(days),
+          value = c(1, nrow(days))
+        ),
+        selectInput('dayVariable', 'Variable', variables),
+        generateAllVariableOptions(variables),
+        selectInput('dayPartition', 'Partition', names(partitions)),
+        generateAllPartitionOptions(partitions),
+        checkboxInput('showDaysTable', 'Show data table')
+      )
+    )
+  })
+  output$dayPlots <- renderUI({
+    generatePlots(variables, partitions)
+  })
+  output$daysTablePanel <- renderUI({
+    conditionalPanel(
+      condition = 'input.showDaysTable',
+      tableOutput('daysTable')
+    )
+  })
+  output$daysTable <- renderTable({
+    days
   })
 }

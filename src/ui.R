@@ -3,7 +3,6 @@ issuesPanel <- tabPanel(
   br(),
   sidebarLayout(
     sidebarPanel(
-      fileInput('issuesFile', 'Issues CSV File', FALSE, c('text/csv')),
       htmlOutput('issueOptions')
     ),
     mainPanel(
@@ -19,7 +18,6 @@ daysPanel <- tabPanel(
   br(),
   sidebarLayout(
     sidebarPanel(
-      fileInput('daysFile', 'Days CSV File', FALSE, c('text/csv')),
       htmlOutput('dayOptions')
     ),
     mainPanel(

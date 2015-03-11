@@ -1,4 +1,4 @@
-issues <- function(input, output, clientData, session) {
+issues <- function(datadir, input, output, clientData, session) {
 
   measures <- c(
     'leadTime',
@@ -6,68 +6,41 @@ issues <- function(input, output, clientData, session) {
     'deferredTime'
   )
 
-  issuesReactive <- reactive({
-    file <- input$issuesFile
-    if (!is.null(file)) {
-      issues = read.csv(file[1, 'datapath'])
-      issues$created <- as.Date(issues$created, '%Y/%m/%d')
-      issues$closed <- as.Date(issues$closed, '%Y/%m/%d')
-      issues
-    }
-  })
+  issues <- {
+    issues = read.csv(file.path(datadir, 'jira-issues.csv'))
+    issues$created <- as.Date(issues$created, '%Y/%m/%d')
+    issues$closed <- as.Date(issues$closed, '%Y/%m/%d')
+    issues
+  }
 
-  closedIssuesReactive <- reactive({
-    issues = issuesReactive()
-    if (!is.null(issues)) {
-      issues[!(is.na(issues$closed)), ]
-    }
-  })
-
-  minClosedDateReactive <- reactive({
-    closedIssues = closedIssuesReactive()
-    if (!is.null(closedIssues)) {
-      min(closedIssues$closed)
-    }
-  })
-
-  maxClosedDateReactive <- reactive({
-    closedIssues = closedIssuesReactive()
-    if (!is.null(closedIssues)) {
-      max(closedIssues$closed)
-    }
-  })
-
+  closedIssues <- issues[!(is.na(issues$closed)), ]
+  minClosedDate <- min(closedIssues$closed)
+  maxClosedDate <- max(closedIssues$closed)
   filteredClosedIssuesReactive <- reactive({
-    closedIssues = closedIssuesReactive()
-    if (!is.null(closedIssues)) {
-      closedIssues[closedIssues$closed >= (maxClosedDateReactive() - input$issueDays), ]
-    }
+    closedIssues[closedIssues$closed >= (maxClosedDate - input$issueDays), ]
   })
 
-  dimensionsReactive <- reactive({
-    issues = issuesReactive()
-    if (!is.null(issues)) {
-      columns = colnames(issues)
-      labelMatches = na.omit(
-        stringr::str_match(
-          columns,
-         '^label\\.(.*)$'
-        )
+  dimensions <- {
+    columns = colnames(issues)
+    labelMatches = na.omit(
+      stringr::str_match(
+        columns,
+       '^label\\.(.*)$'
       )
-      labels = unique(labelMatches[, 1])
-      componentMatches = na.omit(
-        stringr::str_match(
-          columns,
-         '^component\\.(.*)$'
-        )
+    )
+    labels = unique(labelMatches[, 1])
+    componentMatches = na.omit(
+      stringr::str_match(
+        columns,
+       '^component\\.(.*)$'
       )
-      components = unique(componentMatches[, 1])
-      list(
-        labels = labels,
-        components = components
-      )
-    }
-  })
+    )
+    components = unique(componentMatches[, 1])
+    list(
+      labels = labels,
+      components = components
+    )
+  }
 
   densityPlot <- function (measure) {
     cropInputName = paste0('issue_density_', measure, '_crop')
@@ -130,7 +103,6 @@ issues <- function(input, output, clientData, session) {
   }
 
   densityOptionPanel <- function (measure) {
-    closedIssues = closedIssuesReactive()
     cropInputName = paste0('issue_density_', measure, '_crop')
     binInputName = paste0('issue_density_', measure, '_bin')
     defaultValue = c(
@@ -171,7 +143,6 @@ issues <- function(input, output, clientData, session) {
   }
 
   scatterOption <- function (measure) {
-    closedIssues = closedIssuesReactive()
     cropInputName = paste0('issue_scatter_', measure, '_crop')
     defaultValue = c(
       floor(min(closedIssues[[measure]])),
@@ -184,55 +155,47 @@ issues <- function(input, output, clientData, session) {
     lapply(measures, scatterOption)
   }
 
-  observe({
-    dimensions = dimensionsReactive()
-    if (!is.null(dimensions)) {
-      closedIssues <- closedIssuesReactive()
-      maxClosedDate <- maxClosedDateReactive()
-      minClosedDate <- minClosedDateReactive()
-      maxDays <- as.numeric(maxClosedDate - minClosedDate)
-      output$issueOptions <- renderUI({
-        verticalLayout(
-          sliderInput('issuePlotHeight', 'Plot Height', min = 100, max = 2000, value = 400),
-          sliderInput('issueDays', 'Days', min = 1, max = maxDays, value = maxDays),
-          selectInput('issuePlots', 'Plot', c('density', 'scatter')),
-          conditionalPanel(
-            'input.issuePlots === "density"',
-            selectInput(
-              'issueDensities',
-              'Measure',
-              measures
-            ),
-            densityOptionPanels()
-          ),
-          conditionalPanel(
-            'input.issuePlots === "scatter"',
-            scatterOptions()
-          ),
-          checkboxInput('showIssuesTable', 'Show data table')
-        )
-      })
-      output$issuePlots <- renderUI({
-        verticalLayout(
-          conditionalPanel(
-            'input.issuePlots === "density"',
-            densityPlotPanels()
-          ),
-          conditionalPanel(
-            'input.issuePlots === "scatter"',
-            scatterMatrix()
-          )
-        )
-      })
-      output$issuesTablePanel <- renderUI({
-        conditionalPanel(
-          condition = 'input.showIssuesTable',
-          tableOutput('issuesTable')
-        )
-      })
-      output$issuesTable <- renderTable({
-        issuesReactive()
-      })
-    }
+  maxDays <- as.numeric(maxClosedDate - minClosedDate)
+  output$issueOptions <- renderUI({
+    verticalLayout(
+      sliderInput('issuePlotHeight', 'Plot Height', min = 100, max = 2000, value = 700),
+      sliderInput('issueDays', 'Days', min = 1, max = maxDays, value = maxDays),
+      selectInput('issuePlots', 'Plot', c('density', 'scatter')),
+      conditionalPanel(
+        'input.issuePlots === "density"',
+        selectInput(
+          'issueDensities',
+          'Measure',
+          measures
+        ),
+        densityOptionPanels()
+      ),
+      conditionalPanel(
+        'input.issuePlots === "scatter"',
+        scatterOptions()
+      ),
+      checkboxInput('showIssuesTable', 'Show data table')
+    )
+  })
+  output$issuePlots <- renderUI({
+    verticalLayout(
+      conditionalPanel(
+        'input.issuePlots === "density"',
+        densityPlotPanels()
+      ),
+      conditionalPanel(
+        'input.issuePlots === "scatter"',
+        scatterMatrix()
+      )
+    )
+  })
+  output$issuesTablePanel <- renderUI({
+    conditionalPanel(
+      condition = 'input.showIssuesTable',
+      tableOutput('issuesTable')
+    )
+  })
+  output$issuesTable <- renderTable({
+    issues
   })
 }

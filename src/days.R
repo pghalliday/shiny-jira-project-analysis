@@ -91,8 +91,8 @@ days <- function(datadir, input, output, clientData, session) {
       )
       (
         zoo::autoplot.zoo(dataMA, facets = NULL, ylim = ylim)
-        + geom_line(size = 1.5)
-        + theme(text = element_text(size = 16))
+        + ggplot2::geom_line(size = 1.5)
+        + ggplot2::theme(text = ggplot2::element_text(size = 16))
       )
     })
   }
